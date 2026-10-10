@@ -1,0 +1,13 @@
+.product-visual img{width:100%;height:100%;object-fit:contain;background:#fff;padding:8px}
+.live-product{border-top:1px solid #edf0e9;padding-top:11px;margin-top:11px}
+.live-product-name{font-size:11px;line-height:1.55;margin:0;color:#415c57;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.live-meta{display:flex;justify-content:space-between;gap:8px;align-items:end;margin-top:8px}
+.shop-name{font-size:9px;color:#7b8984;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.price{font-size:16px;font-weight:800;color:#b94c43;white-space:nowrap}
+.api-credit{margin-bottom:0!important}
+.api-credit a{text-decoration:underline}
+.policy{max-width:800px}
+.policy h1{font-size:38px}
+.policy h2{margin-top:38px;font-size:22px}
+.policy p{line-height:1.9}
+@media(max-width:650px){.policy h1{font-size:30px}.live-product-name{font-size:10px}.price{font-size:14px}}
