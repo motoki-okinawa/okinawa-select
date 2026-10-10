@@ -54,23 +54,27 @@
     return (Array.isArray(data?.items)?data.items:[]).map(item=>normalizeItem(theme,item)).find(item=>item&&item.itemName&&item.itemPrice>0)||null;
   }
 
-  async function load({themes,credentials,onProgress}){
+  async function load({themes,credentials,onProgress,onStage}){
     const cached=readCache();
-    if(cached){onProgress?.(cached,true);return cached;}
-    if(!credentials?.applicationId||!credentials?.accessKey||!credentials?.affiliateId) return null;
+    if(cached){onStage?.('cache',0);onProgress?.(cached,true);return cached;}
+    if(!credentials?.applicationId||!credentials?.accessKey||!credentials?.affiliateId) throw new Error('API configuration missing');
     const data={apiVersion:API_VERSION,updatedAt:new Date().toISOString(),items:{}};
     for(const [index,theme] of themes.entries()){
+      onStage?.('request',index);
       try{
         const item=await fetchTheme(theme,credentials);
         if(item) data.items[theme.id]=item;
       }catch(error){
+        onStage?.('error',index);
         if(index===0) throw error;
       }
+      onStage?.('received',index);
       onProgress?.(data,false);
       if(index<themes.length-1) await wait(1200);
     }
     data.updatedAt=new Date().toISOString();
     writeCache(data);
+    onStage?.('complete',themes.length);
     onProgress?.(data,false);
     return data;
   }

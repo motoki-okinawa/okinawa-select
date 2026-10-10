@@ -62,10 +62,19 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{document.querySelec
 drawFilters();drawProducts();drawChecks();
 const rakutenConfig=window.SITE_CONFIG?.rakuten;
 if(window.RAKUTEN_CLIENT&&rakutenConfig?.applicationId){
-  $$('#dataStatus').textContent='楽天市場の商品情報を確認中…';
-  window.RAKUTEN_CLIENT.load({themes:items,credentials:rakutenConfig,onProgress:(data)=>{
+  const dataStatus=$$('#dataStatus');
+  dataStatus.textContent='楽天市場の商品情報を確認中…';
+  dataStatus.dataset.apiState='starting';
+  window.RAKUTEN_CLIENT.load({themes:items,credentials:rakutenConfig,onStage:(stage,index)=>{
+    dataStatus.dataset.apiState=`${stage}-${index}`;
+  },onProgress:(data)=>{
     liveItems=data.items||{};
     drawProducts();
     showUpdatedAt(data.updatedAt);
-  }}).catch(()=>{$$('#dataStatus').textContent='販売状況・価格はリンク先で確認してください。';});
+  }}).then(data=>{if(!data) throw new Error('API data unavailable');dataStatus.dataset.apiState='ready';}).catch(error=>{
+    dataStatus.dataset.apiState='error';
+    dataStatus.title=error?.message||'API error';
+    dataStatus.textContent='販売状況・価格はリンク先で確認してください。';
+    console.warn('Rakuten product refresh failed.');
+  });
 }
