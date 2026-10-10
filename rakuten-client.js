@@ -2,7 +2,7 @@
 (function(){
   const API_ENDPOINT='https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
   const API_VERSION='2026-07-01';
-  const CACHE_KEY='okinawa-select-rakuten-v1';
+  const CACHE_KEY='okinawa-select-rakuten-v2';
   const CACHE_TTL=24*60*60*1000;
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   const safeHttps=value=>{try{const url=new URL(value);return url.protocol==='https:'?url.href:'';}catch{return '';}};
@@ -73,6 +73,7 @@
       if(index<themes.length-1) await wait(1200);
     }
     data.updatedAt=new Date().toISOString();
+    if(!Object.keys(data.items).length) throw new Error('No valid Rakuten products returned');
     writeCache(data);
     onStage?.('complete',themes.length);
     onProgress?.(data,false);
