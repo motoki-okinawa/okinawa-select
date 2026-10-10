@@ -1,2 +1,3 @@
 User-agent: *
-Disallow: /
+Allow: /
+Sitemap: https://motoki-okinawa.github.io/okinawa-select/sitemap.xml

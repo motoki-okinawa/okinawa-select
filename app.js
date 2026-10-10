@@ -3,7 +3,7 @@ const $$=(q)=>document.querySelector(q);
 let selected='すべて', favOnly=false;
 let favorites=new Set(JSON.parse(localStorage.getItem('okinawa-select-faves')||'[]'));
 const items=window.PRODUCTS||[];
-const liveItems=window.RAKUTEN_PRODUCTS?.items||{};
+let liveItems=window.RAKUTEN_PRODUCTS?.items||{};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeHttps=(value)=>{try{const url=new URL(value);return url.protocol==='https:'?url.href:'';}catch{return '';}};
 const rakutenSearch=q=>'https://search.rakuten.co.jp/search/mall/'+encodeURIComponent(q)+'/';
@@ -44,11 +44,13 @@ function drawChecks(){
   updateProgress();
 }
 function updateProgress(){const n=allChecks.filter(x=>checked.has(x)).length;$$('#progressText').textContent=`${n} / ${allChecks.length} チェック済み`;$$('#progressBar').style.width=`${n/allChecks.length*100}%`;}
-const updatedAt=window.RAKUTEN_PRODUCTS?.updatedAt;
+function showUpdatedAt(updatedAt){
 if(updatedAt&&Object.keys(liveItems).length){
   const stamp=new Intl.DateTimeFormat('ja-JP',{dateStyle:'medium',timeZone:'Asia/Tokyo'}).format(new Date(updatedAt));
   $$('#dataStatus').textContent=`商品情報は${stamp}更新。価格・在庫はリンク先を優先してください。`;
 }
+}
+showUpdatedAt(window.RAKUTEN_PRODUCTS?.updatedAt);
 $$('#search').oninput=drawProducts;
 $$('#favFilter').onclick=()=>{favOnly=!favOnly;$$('#favFilter').classList.toggle('active',favOnly);$$('#favFilter').setAttribute('aria-pressed',String(favOnly));drawProducts();};
 $$('#resetChecks').onclick=()=>{checked.clear();localStorage.removeItem('okinawa-select-checks');drawChecks();};
@@ -58,3 +60,12 @@ if(room&&/^https:\/\/room\.rakuten\.co\.jp\//.test(room)){for(const id of ['room
 $$('#menuBtn').onclick=()=>{const nav=document.querySelector('nav');const on=nav.classList.toggle('open');$$('#menuBtn').setAttribute('aria-expanded',String(on));};
 document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{document.querySelector('nav').classList.remove('open');$$('#menuBtn').setAttribute('aria-expanded','false');});
 drawFilters();drawProducts();drawChecks();
+const rakutenConfig=window.SITE_CONFIG?.rakuten;
+if(window.RAKUTEN_CLIENT&&rakutenConfig?.applicationId){
+  $$('#dataStatus').textContent='楽天市場の商品情報を確認中…';
+  window.RAKUTEN_CLIENT.load({themes:items,credentials:rakutenConfig,onProgress:(data)=>{
+    liveItems=data.items||{};
+    drawProducts();
+    showUpdatedAt(data.updatedAt);
+  }}).catch(()=>{$$('#dataStatus').textContent='販売状況・価格はリンク先で確認してください。';});
+}
