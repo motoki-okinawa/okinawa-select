@@ -27,17 +27,16 @@
     try{localStorage.setItem(CACHE_KEY,JSON.stringify(data));}catch{}
   }
 
-  function jsonp(url){
+  function requestJson(url){
     return new Promise((resolve,reject)=>{
-      const callback=`__okinawaRakuten_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const script=document.createElement('script');
-      const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
-      const timer=setTimeout(()=>{cleanup();reject(new Error('API timeout'));},10000);
-      window[callback]=data=>{cleanup();resolve(data);};
-      script.onerror=()=>{cleanup();reject(new Error('API load failed'));};
-      script.referrerPolicy='strict-origin-when-cross-origin';
-      script.src=`${url}&callback=${encodeURIComponent(callback)}`;
-      document.head.appendChild(script);
+      const xhr=new XMLHttpRequest();
+      xhr.open('GET',url,true);
+      xhr.responseType='json';
+      xhr.timeout=10000;
+      xhr.onload=()=>xhr.status>=200&&xhr.status<300?resolve(xhr.response):reject(new Error(`HTTP ${xhr.status}`));
+      xhr.onerror=()=>reject(new Error('API load failed'));
+      xhr.ontimeout=()=>reject(new Error('API timeout'));
+      xhr.send();
     });
   }
 
@@ -50,7 +49,7 @@
       format:'json',formatVersion:'2',hits:'5',availability:'1',imageFlag:'1',sort:'standard',
       elements:'itemName,itemPrice,itemUrl,affiliateUrl,mediumImageUrls,shopName,itemCode,availability'
     });
-    const data=await jsonp(`${API_ENDPOINT}?${params}`);
+    const data=await requestJson(`${API_ENDPOINT}?${params}`);
     if(data?.error) throw new Error(data.error_description||data.error);
     return (Array.isArray(data?.items)?data.items:[]).map(item=>normalizeItem(theme,item)).find(item=>item&&item.itemName&&item.itemPrice>0)||null;
   }
