@@ -51,7 +51,8 @@
     });
     const data=await requestJson(`${API_ENDPOINT}?${params}`);
     if(data?.error) throw new Error(data.error_description||data.error);
-    return (Array.isArray(data?.items)?data.items:[]).map(item=>normalizeItem(theme,item)).find(item=>item&&item.itemName&&item.itemPrice>0)||null;
+    const rows=Array.isArray(data?.Items)?data.Items:Array.isArray(data?.items)?data.items:[];
+    return rows.map(item=>normalizeItem(theme,item)).find(item=>item&&item.itemName&&item.itemPrice>0)||null;
   }
 
   async function load({themes,credentials,onProgress,onStage}){
