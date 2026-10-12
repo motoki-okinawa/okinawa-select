@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "update:products": "node scripts/update-products.mjs",
+    "validate:affiliate-links": "node scripts/validate-affiliate-links.mjs",
     "build:room-queue": "node scripts/build-room-queue.mjs",
+    "verify:daily-output": "node scripts/verify-daily-output.mjs",
     "test": "node --test tests/*.test.mjs"
   }
 }

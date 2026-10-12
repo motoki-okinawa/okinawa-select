@@ -4,6 +4,6 @@ window.SITE_CONFIG = {
   siteUrl: "", // 公開後のサイトURL
   contactEmail: "", // 公開用の問い合わせメールアドレス
   contactUrl: "https://github.com/motoki-okinawa/okinawa-select/issues",
-  analyticsId: "", // 任意。測定タグ実装は別途同意管理等を確認してから
+  analyticsId: "", // GitHub ActionsのGA_MEASUREMENT_ID変数から公開時に設定
   rakuten: null // 公開ビルド時に許可ドメイン用の設定を注入
 };

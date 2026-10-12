@@ -11,3 +11,4 @@
 .policy h2{margin-top:38px;font-size:22px}
 .policy p{line-height:1.9}
 @media(max-width:650px){.policy h1{font-size:30px}.live-product-name{font-size:10px}.price{font-size:14px}}
+.analytics-consent{position:fixed;z-index:50;left:18px;right:18px;bottom:18px;max-width:700px;margin:auto;background:#fff;color:#173d41;border:1px solid #cfe0d8;border-radius:12px;box-shadow:0 14px 45px #1238;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:18px}.analytics-consent p{margin:0;font-size:12px;line-height:1.7}.analytics-consent div{display:flex;gap:8px}.analytics-consent button{border:1px solid #16817d;background:#fff;color:#09635f;border-radius:7px;padding:8px 12px;font-weight:700}.analytics-consent .accept{background:#087a77;color:#fff}@media(max-width:650px){.analytics-consent{align-items:stretch;flex-direction:column}.analytics-consent div{justify-content:flex-end}}

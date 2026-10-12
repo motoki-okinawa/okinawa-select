@@ -8,6 +8,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const safeHttps=(value)=>{try{const url=new URL(value);return url.protocol==='https:'?url.href:'';}catch{return '';}};
 const rakutenSearch=q=>'https://search.rakuten.co.jp/search/mall/'+encodeURIComponent(q)+'/';
 const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'';
+const analyticsId=String(window.SITE_CONFIG?.analyticsId||'').trim();
 
 function drawFilters(){
   $$('#filters').innerHTML=categories.map(c=>`<button class="chip ${selected===c?'active':''}" data-cat="${esc(c)}" aria-pressed="${selected===c}">${esc(c)}</button>`).join('');
@@ -33,7 +34,8 @@ function drawProducts(){
     const affiliateUrl=safeHttps(live?.affiliateUrl);
     const href=affiliateUrl||rakutenSearch(p.query);
     const linkText=affiliateUrl?'楽天市場で商品を見る':'楽天市場で検索';
-    return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(p.category)}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}">${linkText} <span>↗</span></a></div></div></article>`;
+    const tracking=affiliateUrl?` data-affiliate-click data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
+    return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(p.category)}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}"${tracking}>${linkText} <span>↗</span></a></div></div></article>`;
   }).join('');
   document.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>{const id=Number(b.dataset.fav);favorites.has(id)?favorites.delete(id):favorites.add(id);localStorage.setItem('okinawa-select-faves',JSON.stringify([...favorites]));drawProducts();});
 }
@@ -62,6 +64,18 @@ if(room&&/^https:\/\/room\.rakuten\.co\.jp\//.test(room)){for(const id of ['room
 $$('#menuBtn').onclick=()=>{const nav=document.querySelector('nav');const on=nav.classList.toggle('open');$$('#menuBtn').setAttribute('aria-expanded',String(on));};
 document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{document.querySelector('nav').classList.remove('open');$$('#menuBtn').setAttribute('aria-expanded','false');});
 drawFilters();drawProducts();drawChecks();
+function initAnalytics(){
+  if(!/^G-[A-Z0-9]+$/i.test(analyticsId)) return;
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};
+  const saved=localStorage.getItem('okinawa-select-analytics-consent');
+  window.gtag('consent','default',{analytics_storage:saved==='granted'?'granted':'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});
+  window.gtag('js',new Date());window.gtag('config',analyticsId,{send_page_view:true});
+  const script=document.createElement('script');script.async=true;script.src=`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsId)}`;document.head.append(script);
+  if(!saved){const banner=document.createElement('div');banner.className='analytics-consent';banner.innerHTML='<p>商品選びの改善のため、匿名の閲覧・商品クリック情報を計測してもよいですか？</p><div><button data-consent="denied">拒否</button><button class="accept" data-consent="granted">許可</button></div>';document.body.append(banner);banner.querySelectorAll('[data-consent]').forEach(button=>button.onclick=()=>{const value=button.dataset.consent;localStorage.setItem('okinawa-select-analytics-consent',value);window.gtag('consent','update',{analytics_storage:value});banner.remove();});}
+  document.addEventListener('click',event=>{const link=event.target.closest('[data-affiliate-click]');if(!link||localStorage.getItem('okinawa-select-analytics-consent')!=='granted')return;window.gtag('event','select_item',{item_list_id:'okinawa_select',item_list_name:'OKINAWA SELECT',items:[{item_id:link.dataset.itemId,item_name:link.dataset.itemName,item_category:link.dataset.category,price:Number(link.dataset.price)||0,index:Number(link.dataset.position)||0,affiliation:'Rakuten Ichiba'}],transport_type:'beacon'});});
+}
+initAnalytics();
 const rakutenConfig=window.SITE_CONFIG?.rakuten;
 if(window.RAKUTEN_CLIENT&&rakutenConfig?.applicationId){
   const dataStatus=$$('#dataStatus');

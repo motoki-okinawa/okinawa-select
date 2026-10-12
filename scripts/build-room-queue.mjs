@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRoomDraft } from './room-copy.mjs';
+import { renderRoomQueueHtml } from './room-queue-html.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const candidatesPath = path.join(root, 'data/product-candidates.json');
@@ -37,4 +38,5 @@ for (const [index, row] of uniqueRows.entries()) {
   markdown.push(`## ${index + 1}. ${row.themeName}`, '', `- 商品: ${row.itemName}`, `- 価格: ${row.itemPrice.toLocaleString('ja-JP')}円`, `- レビュー: ${row.reviewAverage || '未取得'}（${row.reviewCount.toLocaleString('ja-JP')}件）`, `- 送料: ${row.freeShipping ? '送料込み' : '商品ページで確認'}`, `- 選定スコア: ${row.score}`, `- 楽天市場: ${row.rakutenUrl}`, '', row.copy, '');
 }
 await fs.writeFile(path.join(root, 'reports/room-post-queue.md'), `${markdown.join('\n')}\n`);
+await fs.writeFile(path.join(root, 'reports/room-post-queue.html'), renderRoomQueueHtml(uniqueRows, checkedAt));
 console.log(`Prepared ${uniqueRows.length} manual ROOM posts.`);
