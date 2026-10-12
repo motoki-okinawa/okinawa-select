@@ -35,6 +35,7 @@ for (const [index, theme] of themes.entries()) {
     headers: {
       Accept: 'application/json',
       accessKey: credentials.accessKey,
+      Origin: new URL(siteUrl).origin,
       Referer: siteUrl,
       'User-Agent': 'OKINAWA-SELECT/1.0'
     }
