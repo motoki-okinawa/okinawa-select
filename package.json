@@ -1,0 +1,10 @@
+{
+  "name": "okinawa-select",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "update:products": "node scripts/update-products.mjs",
+    "build:room-queue": "node scripts/build-room-queue.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}

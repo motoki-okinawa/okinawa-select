@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17 20 * * *'
 permissions:
   contents: read
   pages: write
@@ -18,31 +20,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - name: Prepare site with scoped Rakuten credentials
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Select products from the official Rakuten API
         env:
           RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
           RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
           RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}
+        run: npm run update:products
+      - name: Test selection logic
+        run: npm test
+      - name: Prepare manual ROOM posting queue
+        run: npm run build:room-queue
+      - name: Save ROOM posting queue
+        uses: actions/upload-artifact@v4
+        with:
+          name: room-post-queue
+          path: reports/room-post-queue.*
+          retention-days: 30
+      - uses: actions/configure-pages@v5
+      - name: Prepare static site
         run: |
           mkdir _site
           cp index.html privacy.html styles.css product-enhancements.css favicon.svg app.js privacy.js products.js rakuten-client.js rakuten-products.js robots.txt sitemap.xml _site/
           cp -r assets _site/assets
           node <<'NODE'
           const fs=require('node:fs');
-          const rakuten={
-            applicationId:process.env.RAKUTEN_APPLICATION_ID||'',
-            accessKey:process.env.RAKUTEN_ACCESS_KEY||'',
-            affiliateId:process.env.RAKUTEN_AFFILIATE_ID||''
-          };
-          if(Object.values(rakuten).some(value=>!value)) throw new Error('Rakuten repository secrets are missing.');
           const config={
             roomUrl:'https://room.rakuten.co.jp/room_d527155c00/items',
             siteUrl:'https://motoki-okinawa.github.io/okinawa-select',
             contactEmail:'',
             contactUrl:'https://github.com/motoki-okinawa/okinawa-select/issues',
             analyticsId:'',
-            rakuten
+            rakuten:null
           };
           fs.writeFileSync('_site/config.js',`window.SITE_CONFIG = ${JSON.stringify(config,null,2)};\n`);
           NODE

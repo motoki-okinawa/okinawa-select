@@ -1,4 +1,4 @@
-const categories=['すべて','旅の便利グッズ','海・レジャー','沖縄のお土産','沖縄の食品','沖縄雑貨','撮影・スマホ'];
+const categories=['すべて','沖縄旅行の便利グッズ','沖縄のお取り寄せグルメ','旅行・撮影用品'];
 const $$=(q)=>document.querySelector(q);
 let selected='すべて', favOnly=false;
 let favorites=new Set(JSON.parse(localStorage.getItem('okinawa-select-faves')||'[]'));
@@ -19,7 +19,9 @@ function productVisual(p,live){
 }
 function liveProductDetail(live){
   if(!live) return '';
-  return `<div class="live-product"><p class="live-product-name">${esc(live.itemName)}</p><div class="live-meta"><span class="shop-name">${esc(live.shopName)}</span><strong class="price">${esc(yen(live.itemPrice))}</strong></div></div>`;
+  const review=live.reviewAverage?`★ ${Number(live.reviewAverage).toFixed(2)}（${Number(live.reviewCount||0).toLocaleString('ja-JP')}件）`:'レビュー情報なし';
+  const shipping=live.freeShipping?'送料込み':'送料は商品ページで確認';
+  return `<div class="live-product"><p class="live-product-name">${esc(live.itemName)}</p><div class="live-meta"><span class="shop-name">${esc(live.shopName)}</span><strong class="price">${esc(yen(live.itemPrice))}</strong></div><p class="product-facts">${esc(review)} · ${esc(shipping)}</p></div>`;
 }
 function drawProducts(){
   const needle=$$('#search').value.toLocaleLowerCase('ja-JP').trim();
