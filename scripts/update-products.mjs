@@ -5,6 +5,7 @@ import { rankItems } from './product-ranking.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const endpoint = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
+const siteUrl = 'https://motoki-okinawa.github.io/okinawa-select/';
 const credentials = {
   applicationId: process.env.RAKUTEN_APPLICATION_ID || '',
   accessKey: process.env.RAKUTEN_ACCESS_KEY || '',
@@ -19,7 +20,8 @@ const candidates = [];
 
 for (const [index, theme] of themes.entries()) {
   const params = new URLSearchParams({
-    ...credentials,
+    applicationId: credentials.applicationId,
+    affiliateId: credentials.affiliateId,
     keyword: theme.query,
     format: 'json',
     formatVersion: '2',
@@ -29,7 +31,14 @@ for (const [index, theme] of themes.entries()) {
     sort: 'standard',
     elements: 'itemName,itemPrice,itemUrl,affiliateUrl,mediumImageUrls,shopName,itemCode,availability,reviewAverage,reviewCount,postageFlag,pointRate,affiliateRate'
   });
-  const response = await fetch(`${endpoint}?${params}`, { headers: { Accept: 'application/json' } });
+  const response = await fetch(`${endpoint}?${params}`, {
+    headers: {
+      Accept: 'application/json',
+      accessKey: credentials.accessKey,
+      Referer: siteUrl,
+      'User-Agent': 'OKINAWA-SELECT/1.0'
+    }
+  });
   if (!response.ok) {
     const body = (await response.text()).slice(0, 500);
     throw new Error(`Rakuten API ${response.status} for ${theme.name}: ${body}`);
