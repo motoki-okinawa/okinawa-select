@@ -30,7 +30,10 @@ for (const [index, theme] of themes.entries()) {
     elements: 'itemName,itemPrice,itemUrl,affiliateUrl,mediumImageUrls,shopName,itemCode,availability,reviewAverage,reviewCount,postageFlag,pointRate,affiliateRate'
   });
   const response = await fetch(`${endpoint}?${params}`, { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Rakuten API ${response.status} for ${theme.name}`);
+  if (!response.ok) {
+    const body = (await response.text()).slice(0, 500);
+    throw new Error(`Rakuten API ${response.status} for ${theme.name}: ${body}`);
+  }
   const data = await response.json();
   if (data?.error) throw new Error(`${data.error}: ${data.error_description || theme.name}`);
   const rows = Array.isArray(data.Items) ? data.Items : Array.isArray(data.items) ? data.items : [];
