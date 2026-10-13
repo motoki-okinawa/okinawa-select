@@ -87,6 +87,8 @@ $$('#resetChecks').onclick=()=>{checked.clear();localStorage.removeItem('okinawa
 $$('#year').textContent=new Date().getFullYear();
 const room=window.SITE_CONFIG?.roomUrl;
 if(room&&/^https:\/\/room\.rakuten\.co\.jp\//.test(room)){for(const id of ['roomTop','roomBottom']){const node=document.getElementById(id);node.href=room;node.target='_blank';node.rel='noopener noreferrer';node.textContent='楽天ROOMを見る ↗';}}else{$$('#roomTop').setAttribute('title','楽天ROOMのURL設定後に有効になります');}
+const instagram=window.SITE_CONFIG?.instagramUrl;
+if(instagram&&/^https:\/\/(www\.)?instagram\.com\//.test(instagram)){for(const id of ['instagramTop','instagramBottom']){const node=document.getElementById(id);node.href=instagram;node.target='_blank';node.rel='noopener noreferrer';node.textContent='Instagramを見る ↗';}}else{$$('#instagramTop').setAttribute('title','InstagramのURL設定後に有効になります');}
 $$('#menuBtn').onclick=()=>{const nav=document.querySelector('nav');const on=nav.classList.toggle('open');$$('#menuBtn').setAttribute('aria-expanded',String(on));};
 document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{document.querySelector('nav').classList.remove('open');$$('#menuBtn').setAttribute('aria-expanded','false');});
 drawFilters();drawCategoryOverview();drawProducts();drawChecks();

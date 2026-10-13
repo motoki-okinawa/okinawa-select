@@ -68,6 +68,7 @@ jobs:
           const fs=require('node:fs');
           const config={
             roomUrl:'https://room.rakuten.co.jp/room_d527155c00/items',
+            instagramUrl:'https://www.instagram.com/okinawa_gurumetabi/',
             siteUrl:'https://motoki-okinawa.github.io/okinawa-select',
             contactEmail:'',
             contactUrl:'https://github.com/motoki-okinawa/okinawa-select/issues',

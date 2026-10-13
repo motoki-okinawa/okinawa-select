@@ -1,6 +1,7 @@
 // 初期公開前に設定する項目です。未設定のままでもサイトは動作します。
 window.SITE_CONFIG = {
   roomUrl: "https://room.rakuten.co.jp/room_d527155c00/items",
+  instagramUrl: "https://www.instagram.com/okinawa_gurumetabi/",
   siteUrl: "", // 公開後のサイトURL
   contactEmail: "", // 公開用の問い合わせメールアドレス
   contactUrl: "https://github.com/motoki-okinawa/okinawa-select/issues",

@@ -32,3 +32,14 @@ test('Amazonリンクと広告開示が設定されている',async()=>{
   assert.match(app,/data-store="Amazon\.co\.jp"/);
   assert.match(config,/amazonAssociateTag:\s*"a0a5f9-22"/);
 });
+
+test('Instagramと楽天ROOMへの送客導線がある',async()=>{
+  const [html,app,config,css]=await Promise.all([read('index.html'),read('app.js'),read('config.js'),read('styles.css')]);
+  assert.match(html,/沖縄のグルメ・旅情報は/);
+  assert.match(html,/id="instagramTop"/);
+  assert.match(html,/id="instagramBottom"/);
+  assert.match(html,/id="roomBottom"/);
+  assert.match(config,/instagramUrl:\s*"https:\/\/www\.instagram\.com\/okinawa_gurumetabi\/"/);
+  assert.match(app,/instagramTop/);
+  assert.match(css,/\.social-grid\{/);
+});
