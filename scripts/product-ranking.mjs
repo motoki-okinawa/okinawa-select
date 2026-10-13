@@ -1,5 +1,19 @@
 const clamp = value => Math.max(0, Math.min(1, value));
 
+export function toNormalRakutenItemUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    if (url.hostname === 'hb.afl.rakuten.co.jp') {
+      const destination = url.searchParams.get('pc');
+      if (!destination) return '';
+      return toNormalRakutenItemUrl(destination);
+    }
+    return url.protocol === 'https:' && url.hostname === 'item.rakuten.co.jp' ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 export function normalizeItem(theme, row) {
   const item = row?.Item || row || {};
   const imageCandidate = Array.isArray(item.mediumImageUrls) ? item.mediumImageUrls[0] : '';
@@ -11,8 +25,8 @@ export function normalizeItem(theme, row) {
   const pointRate = Number(item.pointRate) || 1;
   const affiliateRate = Number(item.affiliateRate) || 0;
   const affiliateUrl = String(item.affiliateUrl || '').trim();
-  const itemUrl = String(item.itemUrl || '').trim();
-  if (!item.itemCode || !item.itemName || itemPrice <= 0 || !affiliateUrl.startsWith('https://') || !itemUrl.startsWith('https://')) return null;
+  const itemUrl = toNormalRakutenItemUrl(item.itemUrl || affiliateUrl);
+  if (!item.itemCode || !item.itemName || itemPrice <= 0 || !affiliateUrl.startsWith('https://') || !itemUrl) return null;
   return {
     id: theme.id,
     group: theme.group,

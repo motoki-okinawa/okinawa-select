@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rankItems, scoreItem } from '../scripts/product-ranking.mjs';
+import { rankItems, scoreItem, toNormalRakutenItemUrl } from '../scripts/product-ranking.mjs';
 
 const theme = { id: 1, group: '沖縄旅行の便利グッズ', name: '防水ケース', minPrice: 500, maxPrice: 3000, priority: 5 };
 const base = { itemCode: 'shop:item', itemName: '防水ケース', itemPrice: 1500, shopName: '店', itemUrl: 'https://item.rakuten.co.jp/shop/item/', affiliateUrl: 'https://example.com/a', mediumImageUrls: ['https://example.com/a.jpg'], reviewAverage: 4.5, reviewCount: 100, postageFlag: 0, pointRate: 1 };
@@ -30,4 +30,17 @@ test('ROOM投稿用の通常商品URLを保持する', () => {
   const item = rankItems(theme, [base])[0];
   assert.equal(item.itemUrl, base.itemUrl);
   assert.notEqual(item.itemUrl, item.affiliateUrl);
+});
+
+test('APIがitemUrlもアフィリエイト化した場合はpcの通常商品URLへ戻す', () => {
+  const destination = 'https://item.rakuten.co.jp/shop/item/';
+  const wrapped = `https://hb.afl.rakuten.co.jp/hgc/example/?pc=${encodeURIComponent(destination)}&rafcid=example`;
+  assert.equal(toNormalRakutenItemUrl(wrapped), destination);
+  const item = rankItems(theme, [{ ...base, itemUrl: wrapped }])[0];
+  assert.equal(item.itemUrl, destination);
+});
+
+test('楽天市場以外のURLはROOM投稿候補に使わない', () => {
+  assert.equal(toNormalRakutenItemUrl('https://example.com/item'), '');
+  assert.equal(rankItems(theme, [{ ...base, itemUrl: 'https://example.com/item' }]).length, 0);
 });
