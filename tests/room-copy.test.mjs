@@ -12,3 +12,9 @@ test('ジャンルに合うハッシュタグを付ける', () => {
   const draft = createRoomDraft({ group: '沖縄のお取り寄せグルメ', themeName: '沖縄そば' });
   assert.deepEqual(draft.hashtags, ['#沖縄グルメ', '#沖縄土産', '#お取り寄せ']);
 });
+
+test('沖縄雑貨の紹介文を食品と分ける', () => {
+  const draft = createRoomDraft({ group: '沖縄雑貨・ファッション', themeName: 'シーサーの置物' });
+  assert.match(draft.copy, /素材、サイズ、デザイン/);
+  assert.deepEqual(draft.hashtags, ['#沖縄土産', '#沖縄雑貨', '#沖縄好き']);
+});

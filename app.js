@@ -1,7 +1,8 @@
 const categoryDefinitions=[
   {key:'沖縄のお取り寄せグルメ',name:'沖縄グルメ',label:'TASTE OF OKINAWA',icon:'01',description:'旅の余韻を楽しめるお取り寄せと、喜ばれる沖縄土産。'},
   {key:'沖縄旅行の便利グッズ',name:'旅行便利グッズ',label:'TRAVEL ESSENTIALS',icon:'02',description:'日差し・海・移動に備えて、沖縄旅を快適にするアイテム。'},
-  {key:'旅行・撮影用品',name:'旅行・撮影用品',label:'TRAVEL & CAMERA',icon:'03',description:'旅の景色や思い出を、きれいに残すための撮影アイテム。'}
+  {key:'沖縄雑貨・ファッション',name:'沖縄雑貨・ファッション',label:'ISLAND GOODS',icon:'03',description:'Tシャツ、シーサー、琉球ガラスなど、食品以外の沖縄土産。'},
+  {key:'旅行・撮影用品',name:'旅行・撮影用品',label:'TRAVEL & CAMERA',icon:'04',description:'旅の景色や思い出を、きれいに残すための撮影アイテム。'}
 ];
 const categories=['すべて',...categoryDefinitions.map(category=>category.key)];
 const $$=(q)=>document.querySelector(q);
@@ -14,6 +15,8 @@ const safeHttps=(value)=>{try{const url=new URL(value);return url.protocol==='ht
 const rakutenSearch=q=>'https://search.rakuten.co.jp/search/mall/'+encodeURIComponent(q)+'/';
 const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'';
 const analyticsId=String(window.SITE_CONFIG?.analyticsId||'').trim();
+const amazonAssociateTag=String(window.SITE_CONFIG?.amazonAssociateTag||'').trim();
+const amazonSearch=query=>amazonAssociateTag?`https://www.amazon.co.jp/s?k=${encodeURIComponent(query)}&tag=${encodeURIComponent(amazonAssociateTag)}`:'';
 
 function categoryName(key){return categoryDefinitions.find(category=>category.key===key)?.name||key;}
 function selectCategory(key){selected=key;drawFilters();drawCategoryOverview();drawProducts();}
@@ -43,8 +46,10 @@ function productCard(p){
   const affiliateUrl=safeHttps(live?.affiliateUrl);
   const href=affiliateUrl||rakutenSearch(p.query);
   const linkText=affiliateUrl?'楽天市場で商品を見る':'楽天市場で検索';
-  const tracking=affiliateUrl?` data-affiliate-click data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
-  return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(categoryName(p.category))}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}"${tracking}>${linkText} <span>↗</span></a></div></div></article>`;
+  const tracking=affiliateUrl?` data-affiliate-click data-store="Rakuten Ichiba" data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
+  const amazonUrl=safeHttps(amazonSearch(p.query));
+  const amazonLink=amazonUrl?`<a class="amazon-link" href="${esc(amazonUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Amazonで探す：${esc(p.name)}" data-affiliate-click data-store="Amazon.co.jp" data-item-id="amazon-${esc(p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="" data-position="${esc(p.id)}">Amazonで探す <span>↗</span></a>`:'';
+  return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(categoryName(p.category))}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><div class="shop-links"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}"${tracking}>${linkText} <span>↗</span></a>${amazonLink}</div></div></div></article>`;
 }
 function drawProducts(){
   const needle=$$('#search').value.toLocaleLowerCase('ja-JP').trim();
@@ -94,7 +99,7 @@ function initAnalytics(){
   window.gtag('js',new Date());window.gtag('config',analyticsId,{send_page_view:true});
   const script=document.createElement('script');script.async=true;script.src=`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsId)}`;document.head.append(script);
   if(!saved){const banner=document.createElement('div');banner.className='analytics-consent';banner.innerHTML='<p>商品選びの改善のため、匿名の閲覧・商品クリック情報を計測してもよいですか？</p><div><button data-consent="denied">拒否</button><button class="accept" data-consent="granted">許可</button></div>';document.body.append(banner);banner.querySelectorAll('[data-consent]').forEach(button=>button.onclick=()=>{const value=button.dataset.consent;localStorage.setItem('okinawa-select-analytics-consent',value);window.gtag('consent','update',{analytics_storage:value});banner.remove();});}
-  document.addEventListener('click',event=>{const link=event.target.closest('[data-affiliate-click]');if(!link||localStorage.getItem('okinawa-select-analytics-consent')!=='granted')return;window.gtag('event','select_item',{item_list_id:'okinawa_select',item_list_name:'OKINAWA SELECT',items:[{item_id:link.dataset.itemId,item_name:link.dataset.itemName,item_category:link.dataset.category,price:Number(link.dataset.price)||0,index:Number(link.dataset.position)||0,affiliation:'Rakuten Ichiba'}],transport_type:'beacon'});});
+  document.addEventListener('click',event=>{const link=event.target.closest('[data-affiliate-click]');if(!link||localStorage.getItem('okinawa-select-analytics-consent')!=='granted')return;window.gtag('event','select_item',{item_list_id:'okinawa_select',item_list_name:'OKINAWA SELECT',items:[{item_id:link.dataset.itemId,item_name:link.dataset.itemName,item_category:link.dataset.category,price:Number(link.dataset.price)||0,index:Number(link.dataset.position)||0,affiliation:link.dataset.store||'Unknown'}],transport_type:'beacon'});});
 }
 initAnalytics();
 const rakutenConfig=window.SITE_CONFIG?.rakuten;

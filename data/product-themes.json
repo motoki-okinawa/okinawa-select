@@ -13,5 +13,9 @@
   {"id":12,"group":"沖縄のお取り寄せグルメ","name":"島とうがらし調味料","query":"沖縄 島とうがらし コーレーグース","minPrice":700,"maxPrice":4000,"priority":3},
   {"id":13,"group":"旅行・撮影用品","name":"スマホ用ミニ三脚","query":"スマホ ミニ三脚 コンパクト 旅行","minPrice":1000,"maxPrice":6000,"priority":4},
   {"id":14,"group":"旅行・撮影用品","name":"スマホ用ジンバル","query":"スマホ ジンバル 旅行 動画撮影","minPrice":8000,"maxPrice":25000,"priority":4},
-  {"id":15,"group":"旅行・撮影用品","name":"自撮り棒兼三脚","query":"自撮り棒 三脚 Bluetooth 旅行","minPrice":1500,"maxPrice":7000,"priority":3}
+  {"id":15,"group":"旅行・撮影用品","name":"自撮り棒兼三脚","query":"自撮り棒 三脚 Bluetooth 旅行","minPrice":1500,"maxPrice":7000,"priority":3},
+  {"id":16,"group":"沖縄雑貨・ファッション","name":"沖縄デザインTシャツ","query":"沖縄 Tシャツ デザイン お土産","minPrice":1500,"maxPrice":6000,"priority":5},
+  {"id":17,"group":"沖縄雑貨・ファッション","name":"シーサーの置物","query":"シーサー 置物 沖縄 お土産","minPrice":1000,"maxPrice":10000,"priority":5},
+  {"id":18,"group":"沖縄雑貨・ファッション","name":"琉球ガラス","query":"琉球ガラス グラス 沖縄 お土産","minPrice":1500,"maxPrice":10000,"priority":4},
+  {"id":19,"group":"沖縄雑貨・ファッション","name":"沖縄柄の小物","query":"沖縄柄 小物 ポーチ お土産","minPrice":800,"maxPrice":6000,"priority":3}
 ]

@@ -72,6 +72,7 @@ jobs:
             contactEmail:'',
             contactUrl:'https://github.com/motoki-okinawa/okinawa-select/issues',
             analyticsId:process.env.GA_MEASUREMENT_ID || '',
+            amazonAssociateTag:'a0a5f9-22',
             rakuten:null
           };
           fs.writeFileSync('_site/config.js',`window.SITE_CONFIG = ${JSON.stringify(config,null,2)};\n`);

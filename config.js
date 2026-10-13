@@ -5,5 +5,6 @@ window.SITE_CONFIG = {
   contactEmail: "", // 公開用の問い合わせメールアドレス
   contactUrl: "https://github.com/motoki-okinawa/okinawa-select/issues",
   analyticsId: "", // GitHub ActionsのGA_MEASUREMENT_ID変数から公開時に設定
+  amazonAssociateTag: "a0a5f9-22", // AmazonアソシエイトのトラッキングID
   rakuten: null // 公開ビルド時に許可ドメイン用の設定を注入
 };
