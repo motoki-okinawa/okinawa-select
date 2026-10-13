@@ -1,4 +1,9 @@
-const categories=['すべて','沖縄旅行の便利グッズ','沖縄のお取り寄せグルメ','旅行・撮影用品'];
+const categoryDefinitions=[
+  {key:'沖縄のお取り寄せグルメ',name:'沖縄グルメ',label:'TASTE OF OKINAWA',icon:'01',description:'旅の余韻を楽しめるお取り寄せと、喜ばれる沖縄土産。'},
+  {key:'沖縄旅行の便利グッズ',name:'旅行便利グッズ',label:'TRAVEL ESSENTIALS',icon:'02',description:'日差し・海・移動に備えて、沖縄旅を快適にするアイテム。'},
+  {key:'旅行・撮影用品',name:'旅行・撮影用品',label:'TRAVEL & CAMERA',icon:'03',description:'旅の景色や思い出を、きれいに残すための撮影アイテム。'}
+];
+const categories=['すべて',...categoryDefinitions.map(category=>category.key)];
 const $$=(q)=>document.querySelector(q);
 let selected='すべて', favOnly=false;
 let favorites=new Set(JSON.parse(localStorage.getItem('okinawa-select-faves')||'[]'));
@@ -10,9 +15,18 @@ const rakutenSearch=q=>'https://search.rakuten.co.jp/search/mall/'+encodeURIComp
 const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'';
 const analyticsId=String(window.SITE_CONFIG?.analyticsId||'').trim();
 
+function categoryName(key){return categoryDefinitions.find(category=>category.key===key)?.name||key;}
+function selectCategory(key){selected=key;drawFilters();drawCategoryOverview();drawProducts();}
+function drawCategoryOverview(){
+  $$('#categoryOverview').innerHTML=categoryDefinitions.map(category=>{
+    const count=items.filter(item=>item.category===category.key).length;
+    return `<button class="category-card ${selected===category.key?'active':''}" data-category-card="${esc(category.key)}" aria-pressed="${selected===category.key}"><span class="category-card-number">${esc(category.icon)}</span><span class="category-card-copy"><small>${esc(category.label)}</small><strong>${esc(category.name)}</strong><span>${esc(category.description)}</span></span><b>${count}<small> items</small></b></button>`;
+  }).join('');
+  document.querySelectorAll('[data-category-card]').forEach(button=>button.onclick=()=>selectCategory(button.dataset.categoryCard));
+}
 function drawFilters(){
-  $$('#filters').innerHTML=categories.map(c=>`<button class="chip ${selected===c?'active':''}" data-cat="${esc(c)}" aria-pressed="${selected===c}">${esc(c)}</button>`).join('');
-  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{selected=b.dataset.cat;drawFilters();drawProducts();});
+  $$('#filters').innerHTML=categories.map(category=>`<button class="chip ${selected===category?'active':''}" data-cat="${esc(category)}" aria-pressed="${selected===category}">${esc(category==='すべて'?'すべて':categoryName(category))}</button>`).join('');
+  document.querySelectorAll('[data-cat]').forEach(button=>button.onclick=()=>selectCategory(button.dataset.cat));
 }
 function productVisual(p,live){
   const image=safeHttps(live?.imageUrl);
@@ -24,19 +38,26 @@ function liveProductDetail(live){
   const shipping=live.freeShipping?'送料込み':'送料は商品ページで確認';
   return `<div class="live-product"><p class="live-product-name">${esc(live.itemName)}</p><div class="live-meta"><span class="shop-name">${esc(live.shopName)}</span><strong class="price">${esc(yen(live.itemPrice))}</strong></div><p class="product-facts">${esc(review)} · ${esc(shipping)}</p></div>`;
 }
+function productCard(p){
+  const live=liveItems[p.id];
+  const affiliateUrl=safeHttps(live?.affiliateUrl);
+  const href=affiliateUrl||rakutenSearch(p.query);
+  const linkText=affiliateUrl?'楽天市場で商品を見る':'楽天市場で検索';
+  const tracking=affiliateUrl?` data-affiliate-click data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
+  return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(categoryName(p.category))}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}"${tracking}>${linkText} <span>↗</span></a></div></div></article>`;
+}
 function drawProducts(){
   const needle=$$('#search').value.toLocaleLowerCase('ja-JP').trim();
   const filtered=items.filter(p=>(selected==='すべて'||p.category===selected)&&(!favOnly||favorites.has(p.id))&&(!needle||[p.name,p.category,p.note,...p.tags,liveItems[p.id]?.itemName||''].join(' ').toLocaleLowerCase('ja-JP').includes(needle)));
   $$('#resultCount').textContent=`${filtered.length} アイテム`;
   $$('#empty').hidden=filtered.length>0;
-  $$('#products').innerHTML=filtered.map(p=>{
-    const live=liveItems[p.id];
-    const affiliateUrl=safeHttps(live?.affiliateUrl);
-    const href=affiliateUrl||rakutenSearch(p.query);
-    const linkText=affiliateUrl?'楽天市場で商品を見る':'楽天市場で検索';
-    const tracking=affiliateUrl?` data-affiliate-click data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
-    return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(p.category)}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}"${tracking}>${linkText} <span>↗</span></a></div></div></article>`;
-  }).join('');
+  const showGroups=selected==='すべて'&&!needle&&!favOnly;
+  $$('#products').innerHTML=showGroups?categoryDefinitions.map(category=>{
+    const categoryItems=filtered.filter(item=>item.category===category.key);
+    if(!categoryItems.length)return '';
+    return `<section class="category-block" aria-labelledby="category-${esc(category.icon)}"><div class="category-block-header"><div><span>${esc(category.label)}</span><h3 id="category-${esc(category.icon)}">${esc(category.name)}</h3><p>${esc(category.description)}</p></div><button data-show-category="${esc(category.key)}">このカテゴリーを見る <span>→</span></button></div><div class="product-grid">${categoryItems.map(productCard).join('')}</div></section>`;
+  }).join(''):`<div class="product-grid">${filtered.map(productCard).join('')}</div>`;
+  document.querySelectorAll('[data-show-category]').forEach(button=>button.onclick=()=>selectCategory(button.dataset.showCategory));
   document.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>{const id=Number(b.dataset.fav);favorites.has(id)?favorites.delete(id):favorites.add(id);localStorage.setItem('okinawa-select-faves',JSON.stringify([...favorites]));drawProducts();});
 }
 const checklistData={'必需品':['航空券・予約情報','身分証明書','財布・決済手段','スマートフォン・充電器','着替え・下着'],'沖縄ならでは':['日焼け止め','帽子・サングラス','折りたたみ傘・雨具','羽織れる上着','歩きやすい靴'],'海・アクティビティ':['水着・ラッシュガード','ビーチサンダル・マリンシューズ','タオル・着替え袋','スマホ防水ケース','飲み水・熱中症対策']};
@@ -63,7 +84,7 @@ const room=window.SITE_CONFIG?.roomUrl;
 if(room&&/^https:\/\/room\.rakuten\.co\.jp\//.test(room)){for(const id of ['roomTop','roomBottom']){const node=document.getElementById(id);node.href=room;node.target='_blank';node.rel='noopener noreferrer';node.textContent='楽天ROOMを見る ↗';}}else{$$('#roomTop').setAttribute('title','楽天ROOMのURL設定後に有効になります');}
 $$('#menuBtn').onclick=()=>{const nav=document.querySelector('nav');const on=nav.classList.toggle('open');$$('#menuBtn').setAttribute('aria-expanded',String(on));};
 document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{document.querySelector('nav').classList.remove('open');$$('#menuBtn').setAttribute('aria-expanded','false');});
-drawFilters();drawProducts();drawChecks();
+drawFilters();drawCategoryOverview();drawProducts();drawChecks();
 function initAnalytics(){
   if(!/^G-[A-Z0-9]+$/i.test(analyticsId)) return;
   window.dataLayer=window.dataLayer||[];
