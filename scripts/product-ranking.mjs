@@ -11,7 +11,8 @@ export function normalizeItem(theme, row) {
   const pointRate = Number(item.pointRate) || 1;
   const affiliateRate = Number(item.affiliateRate) || 0;
   const affiliateUrl = String(item.affiliateUrl || '').trim();
-  if (!item.itemCode || !item.itemName || itemPrice <= 0 || !affiliateUrl.startsWith('https://')) return null;
+  const itemUrl = String(item.itemUrl || '').trim();
+  if (!item.itemCode || !item.itemName || itemPrice <= 0 || !affiliateUrl.startsWith('https://') || !itemUrl.startsWith('https://')) return null;
   return {
     id: theme.id,
     group: theme.group,
@@ -20,6 +21,7 @@ export function normalizeItem(theme, row) {
     itemName: String(item.itemName).trim(),
     itemPrice,
     shopName: String(item.shopName || '').trim(),
+    itemUrl,
     affiliateUrl,
     imageUrl: String(imageUrl || ''),
     reviewAverage,

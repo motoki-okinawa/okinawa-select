@@ -23,7 +23,9 @@ const rows = groups.flatMap(({ candidates }) => candidates.slice(0, 1)).map(item
     freeShipping: item.freeShipping,
     affiliateRate: item.affiliateRate,
     score: item.score,
-    rakutenUrl: item.affiliateUrl,
+    // ROOM creates its own affiliate attribution when a normal Rakuten item URL
+    // is posted. Keep the API affiliateUrl exclusive to OKINAWA SELECT.
+    rakutenUrl: item.itemUrl,
     copy: draft.copy,
     hashtags: draft.hashtags
   };

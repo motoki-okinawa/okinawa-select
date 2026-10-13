@@ -19,6 +19,12 @@ assert.equal(selected.length, themes.length, 'all themes must have a selected pr
 assert.equal(linkReport.total, selected.length, 'every selected product must be inspected');
 assert.equal(linkReport.invalid, 0, 'affiliate link inspection must have no anomalies');
 assert.equal(queue.length, selected.length, 'every selected product must have a ROOM draft');
+for (const row of queue) {
+  const selectedItem = selected.find(item => item.itemCode === row.itemCode);
+  assert.ok(selectedItem, `ROOM draft must correspond to selected product: ${row.itemCode}`);
+  assert.equal(row.rakutenUrl, selectedItem.itemUrl, `ROOM draft must use the normal Rakuten item URL: ${row.itemCode}`);
+  assert.doesNotMatch(row.rakutenUrl, /^https:\/\/hb\.afl\.rakuten\.co\.jp\//, `ROOM draft must not reuse the site affiliate URL: ${row.itemCode}`);
+}
 assert.equal((queueHtml.match(/data-copy="name"/g) || []).length, queue.length, 'queue HTML must have one name copy button per product');
 assert.equal((queueHtml.match(/data-copy="copy"/g) || []).length, queue.length, 'queue HTML must have one copy button per product');
 assert.equal((queueHtml.match(/data-copy="url"/g) || []).length, queue.length, 'queue HTML must have one URL copy button per product');
