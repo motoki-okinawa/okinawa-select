@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
 const read=path=>readFile(new URL(path,root),'utf8');
@@ -22,6 +23,17 @@ test('既存データの4カテゴリーと表示定義が一致する',async()=
     assert.match(products,new RegExp(key));
     assert.match(app,new RegExp(`key:'${key}'`));
   }
+});
+
+test('公開テーマと商品カードを15商品に揃える',async()=>{
+  const [themesText,productsSource]=await Promise.all([read('data/product-themes.json'),read('products.js')]);
+  const themes=JSON.parse(themesText);
+  const sandbox={window:{}};
+  vm.runInNewContext(productsSource,sandbox);
+  const products=sandbox.window.PRODUCTS;
+  assert.equal(themes.length,15);
+  assert.equal(products.length,15);
+  assert.deepEqual([...themes.map(item=>item.id)].sort((a,b)=>a-b),[...products.map(item=>item.id)].sort((a,b)=>a-b));
 });
 
 test('確認済みのAmazon個別商品だけリンクする',async()=>{
