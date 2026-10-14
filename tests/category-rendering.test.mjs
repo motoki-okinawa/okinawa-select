@@ -28,13 +28,21 @@ test('確認済みのAmazon個別商品だけリンクする',async()=>{
   const [html,app,config,amazonProducts]=await Promise.all([read('index.html'),read('app.js'),read('config.js'),read('amazon-products.js')]);
   assert.match(html,/Amazonのアソシエイトとして、OKINAWA SELECTは適格販売により収入を得ています。/);
   assert.match(app,/amazonAssociateTag/);
-  assert.match(app,/verifiedAmazonItems\[live\.itemCode\]/);
+  assert.match(app,/verifiedAmazonByRakutenCode\[live\.itemCode\]/);
   assert.match(app,/Amazonで商品を見る/);
   assert.match(app,/data-store="Amazon\.co\.jp"/);
   assert.doesNotMatch(app,/amazon\.co\.jp\/s\?k=/);
   assert.match(html,/amazon-products\.js/);
-  assert.match(amazonProducts,/items:\s*\{\}/);
+  assert.match(amazonProducts,/matchedByRakutenItemCode/);
+  assert.match(amazonProducts,/amazonOnly/);
   assert.match(config,/amazonAssociateTag:\s*"a0a5f9-22"/);
+});
+
+test('Amazonだけの商品を独立カードとして追加できる',async()=>{
+  const app=await read('app.js');
+  assert.match(app,/Object\.entries\(amazonOnlyRecords\)/);
+  assert.match(app,/marketplace:'amazon'/);
+  assert.match(app,/p\?\.marketplace==='amazon'/);
 });
 
 test('Instagramと楽天ROOMへの送客導線がある',async()=>{

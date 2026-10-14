@@ -8,20 +8,37 @@ const categories=['すべて',...categoryDefinitions.map(category=>category.key)
 const $$=(q)=>document.querySelector(q);
 let selected='すべて', favOnly=false;
 let favorites=new Set(JSON.parse(localStorage.getItem('okinawa-select-faves')||'[]'));
-const items=window.PRODUCTS||[];
+const hasVerifiedAmazonIdentity=record=>{
+  const asin=String(record?.asin||'').trim().toUpperCase();
+  const verifiedAt=String(record?.verifiedAt||'');
+  const date=new Date(`${verifiedAt}T00:00:00Z`);
+  return /^[A-Z0-9]{10}$/.test(asin)&&/^\d{4}-\d{2}-\d{2}$/.test(verifiedAt)&&!Number.isNaN(date.valueOf())&&date.toISOString().startsWith(verifiedAt);
+};
+const amazonCatalog=window.AMAZON_PRODUCTS||{};
+const verifiedAmazonByRakutenCode=amazonCatalog.matchedByRakutenItemCode||{};
+const amazonOnlyRecords=amazonCatalog.amazonOnly||{};
+const amazonOnlyItems=Object.entries(amazonOnlyRecords).filter(([,record])=>hasVerifiedAmazonIdentity(record)&&record?.name&&record?.note&&categoryDefinitions.some(category=>category.key===record?.category)).map(([id,record])=>({
+  id,marketplace:'amazon',category:record.category,name:record.name,label:record.label,note:record.note,
+  tags:Array.isArray(record.tags)?record.tags:[],color:record.color||'mint',icon:record.icon||'A'
+}));
+const items=[...(window.PRODUCTS||[]),...amazonOnlyItems];
 let liveItems=window.RAKUTEN_PRODUCTS?.items||{};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeHttps=(value)=>{try{const url=new URL(value);return url.protocol==='https:'?url.href:'';}catch{return '';}};
 const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'';
 const analyticsId=String(window.SITE_CONFIG?.analyticsId||'').trim();
 const amazonAssociateTag=String(window.SITE_CONFIG?.amazonAssociateTag||'').trim();
-const verifiedAmazonItems=window.AMAZON_PRODUCTS?.items||{};
 
-function verifiedAmazonUrl(live){
-  if(!live?.itemCode||!amazonAssociateTag)return '';
-  const record=verifiedAmazonItems[live.itemCode];
+function verifiedAmazonRecord(p,live){
+  if(live?.itemCode)return verifiedAmazonByRakutenCode[live.itemCode];
+  if(p?.marketplace==='amazon')return amazonOnlyRecords[p.id];
+  return null;
+}
+function verifiedAmazonUrl(p,live){
+  if(!amazonAssociateTag)return '';
+  const record=verifiedAmazonRecord(p,live);
   const asin=String(record?.asin||'').trim().toUpperCase();
-  if(!/^[A-Z0-9]{10}$/.test(asin)||!/^\d{4}-\d{2}-\d{2}$/.test(String(record?.verifiedAt||'')))return '';
+  if(!hasVerifiedAmazonIdentity(record))return '';
   return `https://www.amazon.co.jp/dp/${asin}?tag=${encodeURIComponent(amazonAssociateTag)}`;
 }
 
@@ -53,8 +70,9 @@ function productCard(p){
   const affiliateUrl=safeHttps(live?.affiliateUrl);
   const tracking=affiliateUrl?` data-affiliate-click data-store="Rakuten Ichiba" data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
   const rakutenLink=affiliateUrl?`<a href="${esc(affiliateUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="楽天市場で商品を見る：${esc(p.name)}"${tracking}>楽天市場で商品を見る <span>↗</span></a>`:'';
-  const amazonUrl=safeHttps(verifiedAmazonUrl(live));
-  const amazonLink=amazonUrl?`<a class="amazon-link" href="${esc(amazonUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Amazonで商品を見る：${esc(p.name)}" data-affiliate-click data-store="Amazon.co.jp" data-item-id="amazon-${esc(live.itemCode)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="" data-position="${esc(p.id)}">Amazonで商品を見る <span>↗</span></a>`:'';
+  const amazonRecord=verifiedAmazonRecord(p,live);
+  const amazonUrl=safeHttps(verifiedAmazonUrl(p,live));
+  const amazonLink=amazonUrl?`<a class="amazon-link" href="${esc(amazonUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Amazonで商品を見る：${esc(p.name)}" data-affiliate-click data-store="Amazon.co.jp" data-item-id="amazon-${esc(amazonRecord.asin)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="" data-position="${esc(p.id)}">Amazonで商品を見る <span>↗</span></a>`:'';
   const shopLinks=rakutenLink||amazonLink?`${rakutenLink}${amazonLink}`:'<span class="store-unavailable">販売先を確認中</span>';
   return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(categoryName(p.category))}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><div class="shop-links">${shopLinks}</div></div></div></article>`;
 }
@@ -70,7 +88,7 @@ function drawProducts(){
     return `<section class="category-block" aria-labelledby="category-${esc(category.icon)}"><div class="category-block-header"><div><span>${esc(category.label)}</span><h3 id="category-${esc(category.icon)}">${esc(category.name)}</h3><p>${esc(category.description)}</p></div><button data-show-category="${esc(category.key)}">このカテゴリーを見る <span>→</span></button></div><div class="product-grid">${categoryItems.map(productCard).join('')}</div></section>`;
   }).join(''):`<div class="product-grid">${filtered.map(productCard).join('')}</div>`;
   document.querySelectorAll('[data-show-category]').forEach(button=>button.onclick=()=>selectCategory(button.dataset.showCategory));
-  document.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>{const id=Number(b.dataset.fav);favorites.has(id)?favorites.delete(id):favorites.add(id);localStorage.setItem('okinawa-select-faves',JSON.stringify([...favorites]));drawProducts();});
+  document.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>{const raw=b.dataset.fav;const id=raw.startsWith('amazon-')?raw:Number(raw);favorites.has(id)?favorites.delete(id):favorites.add(id);localStorage.setItem('okinawa-select-faves',JSON.stringify([...favorites]));drawProducts();});
 }
 const checklistData={'必需品':['航空券・予約情報','身分証明書','財布・決済手段','スマートフォン・充電器','着替え・下着'],'沖縄ならでは':['日焼け止め','帽子・サングラス','折りたたみ傘・雨具','羽織れる上着','歩きやすい靴'],'海・アクティビティ':['水着・ラッシュガード','ビーチサンダル・マリンシューズ','タオル・着替え袋','スマホ防水ケース','飲み水・熱中症対策']};
 const allChecks=Object.values(checklistData).flat();
