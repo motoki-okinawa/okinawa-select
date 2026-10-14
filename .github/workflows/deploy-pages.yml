@@ -62,7 +62,7 @@ jobs:
           GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
         run: |
           mkdir _site
-          cp index.html privacy.html styles.css product-enhancements.css favicon.svg app.js privacy.js products.js rakuten-client.js rakuten-products.js robots.txt sitemap.xml _site/
+          cp index.html privacy.html styles.css product-enhancements.css favicon.svg app.js privacy.js products.js rakuten-client.js rakuten-products.js amazon-products.js robots.txt sitemap.xml _site/
           cp -r assets _site/assets
           node <<'NODE'
           const fs=require('node:fs');

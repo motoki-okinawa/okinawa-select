@@ -24,12 +24,16 @@ test('既存データの4カテゴリーと表示定義が一致する',async()=
   }
 });
 
-test('Amazonリンクと広告開示が設定されている',async()=>{
-  const [html,app,config]=await Promise.all([read('index.html'),read('app.js'),read('config.js')]);
+test('確認済みのAmazon個別商品だけリンクする',async()=>{
+  const [html,app,config,amazonProducts]=await Promise.all([read('index.html'),read('app.js'),read('config.js'),read('amazon-products.js')]);
   assert.match(html,/Amazonのアソシエイトとして、OKINAWA SELECTは適格販売により収入を得ています。/);
   assert.match(app,/amazonAssociateTag/);
-  assert.match(app,/Amazonで探す/);
+  assert.match(app,/verifiedAmazonItems\[live\.itemCode\]/);
+  assert.match(app,/Amazonで商品を見る/);
   assert.match(app,/data-store="Amazon\.co\.jp"/);
+  assert.doesNotMatch(app,/amazon\.co\.jp\/s\?k=/);
+  assert.match(html,/amazon-products\.js/);
+  assert.match(amazonProducts,/items:\s*\{\}/);
   assert.match(config,/amazonAssociateTag:\s*"a0a5f9-22"/);
 });
 

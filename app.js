@@ -12,11 +12,18 @@ const items=window.PRODUCTS||[];
 let liveItems=window.RAKUTEN_PRODUCTS?.items||{};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeHttps=(value)=>{try{const url=new URL(value);return url.protocol==='https:'?url.href:'';}catch{return '';}};
-const rakutenSearch=q=>'https://search.rakuten.co.jp/search/mall/'+encodeURIComponent(q)+'/';
 const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'';
 const analyticsId=String(window.SITE_CONFIG?.analyticsId||'').trim();
 const amazonAssociateTag=String(window.SITE_CONFIG?.amazonAssociateTag||'').trim();
-const amazonSearch=query=>amazonAssociateTag?`https://www.amazon.co.jp/s?k=${encodeURIComponent(query)}&tag=${encodeURIComponent(amazonAssociateTag)}`:'';
+const verifiedAmazonItems=window.AMAZON_PRODUCTS?.items||{};
+
+function verifiedAmazonUrl(live){
+  if(!live?.itemCode||!amazonAssociateTag)return '';
+  const record=verifiedAmazonItems[live.itemCode];
+  const asin=String(record?.asin||'').trim().toUpperCase();
+  if(!/^[A-Z0-9]{10}$/.test(asin)||!/^\d{4}-\d{2}-\d{2}$/.test(String(record?.verifiedAt||'')))return '';
+  return `https://www.amazon.co.jp/dp/${asin}?tag=${encodeURIComponent(amazonAssociateTag)}`;
+}
 
 function categoryName(key){return categoryDefinitions.find(category=>category.key===key)?.name||key;}
 function selectCategory(key){selected=key;drawFilters();drawCategoryOverview();drawProducts();}
@@ -44,12 +51,12 @@ function liveProductDetail(live){
 function productCard(p){
   const live=liveItems[p.id];
   const affiliateUrl=safeHttps(live?.affiliateUrl);
-  const href=affiliateUrl||rakutenSearch(p.query);
-  const linkText=affiliateUrl?'楽天市場で商品を見る':'楽天市場で検索';
   const tracking=affiliateUrl?` data-affiliate-click data-store="Rakuten Ichiba" data-item-id="${esc(live.itemCode||p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="${esc(live.itemPrice||'')}" data-position="${esc(p.id)}"`:'';
-  const amazonUrl=safeHttps(amazonSearch(p.query));
-  const amazonLink=amazonUrl?`<a class="amazon-link" href="${esc(amazonUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Amazonで探す：${esc(p.name)}" data-affiliate-click data-store="Amazon.co.jp" data-item-id="amazon-${esc(p.id)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="" data-position="${esc(p.id)}">Amazonで探す <span>↗</span></a>`:'';
-  return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(categoryName(p.category))}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><div class="shop-links"><a href="${esc(href)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="${esc(linkText)}：${esc(p.name)}"${tracking}>${linkText} <span>↗</span></a>${amazonLink}</div></div></div></article>`;
+  const rakutenLink=affiliateUrl?`<a href="${esc(affiliateUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="楽天市場で商品を見る：${esc(p.name)}"${tracking}>楽天市場で商品を見る <span>↗</span></a>`:'';
+  const amazonUrl=safeHttps(verifiedAmazonUrl(live));
+  const amazonLink=amazonUrl?`<a class="amazon-link" href="${esc(amazonUrl)}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Amazonで商品を見る：${esc(p.name)}" data-affiliate-click data-store="Amazon.co.jp" data-item-id="amazon-${esc(live.itemCode)}" data-item-name="${esc(p.name)}" data-category="${esc(p.category)}" data-price="" data-position="${esc(p.id)}">Amazonで商品を見る <span>↗</span></a>`:'';
+  const shopLinks=rakutenLink||amazonLink?`${rakutenLink}${amazonLink}`:'<span class="store-unavailable">販売先を確認中</span>';
+  return `<article class="product"><div class="product-visual ${esc(p.color)}">${productVisual(p,live)}<button class="heart ${favorites.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${esc(p.name)}をお気に入り${favorites.has(p.id)?'から削除':'に追加'}" aria-pressed="${favorites.has(p.id)}">${favorites.has(p.id)?'♥':'♡'}</button></div><div class="product-body"><span class="category">${esc(categoryName(p.category))}</span><h3>${esc(p.name)}</h3><p class="tagline">${esc(p.label)}</p><p class="desc">${esc(p.note)}</p>${liveProductDetail(live)}<div class="product-bottom"><div class="shop-links">${shopLinks}</div></div></div></article>`;
 }
 function drawProducts(){
   const needle=$$('#search').value.toLocaleLowerCase('ja-JP').trim();
